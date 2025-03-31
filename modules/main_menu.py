@@ -11,11 +11,11 @@ def setup(dp: Dispatcher):
             "Я помогу тебе понять, что происходит внутри и снаружи — через язык звёзд и символов.\n\n"
             "🌿 Готова начать?"
         )
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        buttons = [
-            "🔮 Гороскоп", "🃏 Таро-расклад",
-            "💎 Моя энергия", "🧘 Профиль",
-            "📖 Обо мне", "✉️ Задать вопрос"
-        ]
-        keyboard.add(*buttons)
+keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+keyboard.add("🔮 Гороскоп")
+keyboard.add("🃏 Таро-расклад")
+keyboard.add("💎 Моя энергия")
+keyboard.add("🧘 Профиль")
+keyboard.add("📖 Обо мне")
+keyboard.add("✉️ Задать вопрос")
         await message.answer(welcome_text, reply_markup=keyboard)
