@@ -41,3 +41,25 @@ def tarot_menu_keyboard():
         InlineKeyboardButton("🔮 Свободный вопрос — 300", callback_data="tarot_free"),
         InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
     )
+
+from utils.time_status import is_mila_online, online_status_text
+
+@dp.callback_query_handler(lambda c: c.data == "tarot_day")
+async def tarot_card_day(callback: types.CallbackQuery):
+    status = online_status_text()
+
+    if is_mila_online():
+        text = (
+            f"{status}\n\n"
+            "Я вижу твой запрос. Сейчас я заканчиваю работу с другим человеком, но через несколько секунд буду с тобой. 🌿\n\n"
+            "В это время важно быть в тишине и настроиться на то, что важно именно тебе..."
+        )
+    else:
+        text = (
+            f"{status}\n\n"
+            "Мила сейчас не в сети. Ты можешь оставить свой запрос — и как только я появлюсь, расклад будет сделан для тебя с тем же вниманием."
+        )
+
+    await callback.message.edit_text(text)
+    await callback.answer()
+
