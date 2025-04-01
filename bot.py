@@ -2,6 +2,11 @@ import logging
 import os
 from aiogram import Bot, Dispatcher, executor
 from dotenv import load_dotenv
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+
+# Инициализация хранилища и диспетчера
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 
 # Загрузка переменных из .env
 load_dotenv()
