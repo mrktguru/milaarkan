@@ -19,7 +19,11 @@ def setup(dp: Dispatcher):
 
     @dp.callback_query_handler(lambda c: c.data == "noop_status")
     async def ignore_status_click(callback: types.CallbackQuery):
-        await callback.answer("Этот статус не нажимается 😊", show_alert=False)
+        if is_mila_online():
+            text = "Мила сейчас онлайн и готова быть рядом, если ты захочешь обратиться 🌿"
+        else:
+            text = "Сейчас Мила не в сети. Но как только появится — обязательно ответит тебе."
+        await callback.answer(text, show_alert=False)
 
 
 
