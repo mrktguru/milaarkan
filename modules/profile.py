@@ -84,10 +84,12 @@ def setup(dp: Dispatcher):
             f"Время рождения: {user[4]}\n"
             f"Город рождения: {user[5]}"
         )
-
+        
         keyboard = InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("🌟 Персональный гороскоп", callback_data="horoscope_personal"),
             InlineKeyboardButton("✏️ Изменить профиль", callback_data="profile_edit"),
             InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
         )
-
+        
         await message.answer(text, reply_markup=keyboard)
+
