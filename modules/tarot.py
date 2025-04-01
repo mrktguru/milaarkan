@@ -42,3 +42,22 @@ def setup(dp: Dispatcher):
                           "Ты задаёшь вопрос — карта отвечает образом, через который приходит подсказка."
         }
 
+        text = texts.get(data_key, "Расклад не найден.")
+
+        keyboard = InlineKeyboardMarkup().add(
+            InlineKeyboardButton("🔙 Назад", callback_data="menu_tarot")
+        )
+
+        await callback.message.edit_text(text, reply_markup=keyboard)
+        await callback.answer()
+
+
+def tarot_menu_keyboard():
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("🃏 Карта дня — 50", callback_data="tarot_day"),
+        InlineKeyboardButton("🌿 Внутренний компас — 100", callback_data="tarot_compass"),
+        InlineKeyboardButton("❤️ Отношения — 250", callback_data="tarot_love"),
+        InlineKeyboardButton("💼 Моя ситуация — 250", callback_data="tarot_action"),
+        InlineKeyboardButton("🔮 Свободный вопрос — 300", callback_data="tarot_free"),
+        InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
+    )
