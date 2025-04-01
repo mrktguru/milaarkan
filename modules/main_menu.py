@@ -1,6 +1,8 @@
 from aiogram import types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from utils.time_status import online_status_text
+
 
 def setup(dp: Dispatcher):
 
@@ -15,17 +17,10 @@ def setup(dp: Dispatcher):
         )
         await message.answer(text, reply_markup=main_menu_keyboard())
 
-    @dp.callback_query_handler(lambda c: c.data == "main_menu")
-    async def return_to_main_menu(callback: types.CallbackQuery):
-        text = (
-            "Здравствуй.\n"
-            "Меня зовут Мила Аркан, я астролог и практикующий психолог.\n\n"
-            "Если ты здесь — это не случайность. Иногда судьба проявляется через детали: нужный человек, вовремя прочитанное сообщение… или вот такой бот.\n\n"
-            "Я помогу тебе понять, что происходит внутри и снаружи — через язык звёзд и символов.\n\n"
-            "🌿 Готова начать?"
-        )
-        await callback.message.edit_text(text, reply_markup=main_menu_keyboard())
-        await callback.answer()
+@dp.callback_query_handler(lambda c: c.data == "noop_status")
+async def ignore_status_click(callback: types.CallbackQuery):
+    await callback.answer("Этот статус не нажимается 😊", show_alert=False)
+
 
 
 def main_menu_keyboard():
@@ -38,4 +33,8 @@ def main_menu_keyboard():
         InlineKeyboardButton("📖 Обо мне", callback_data="menu_about"),
         InlineKeyboardButton("✉️ Задать вопрос", callback_data="menu_question")
     )
+    # Добавим статусную кнопку в самом низу
+    status = online_status_text()
+    keyboard.add(InlineKeyboardButton(status, callback_data="noop_status"))
     return keyboard
+
