@@ -60,32 +60,32 @@ def setup(dp: Dispatcher):
         await ProfileForm.next()
 
     @dp.message_handler(state=ProfileForm.birth_city)
-    async def fsm_birth_city(message: types.Message, state: FSMContext):
-        data = await state.get_data()
-        await save_user(
-            telegram_id=data["telegram_id"],
-            name=data["name"],
-            birth_date=data["birth_date"],
-            birth_time=data["birth_time"],
-            birth_city=message.text
-        )
+async def fsm_birth_city(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    await save_user(
+        telegram_id=data["telegram_id"],
+        name=data["name"],
+        birth_date=data["birth_date"],
+        birth_time=data["birth_time"],
+        birth_city=message.text
+    )
     await state.finish()
     await message.answer("✨ Спасибо! Профиль сохранён.")
 
-# Получаем сохранённые данные и показываем профиль
-user = await get_user(message.from_user.id)
-text = (
-    f"🧘 Твой профиль:\n\n"
-    f"Имя: {user[2]}\n"
-    f"Дата рождения: {user[3]}\n"
-    f"Время рождения: {user[4]}\n"
-    f"Город рождения: {user[5]}"
-)
+    # Показываем заполненный профиль
+    user = await get_user(message.from_user.id)
+    text = (
+        f"🧘 Твой профиль:\n\n"
+        f"Имя: {user[2]}\n"
+        f"Дата рождения: {user[3]}\n"
+        f"Время рождения: {user[4]}\n"
+        f"Город рождения: {user[5]}"
+    )
 
-keyboard = InlineKeyboardMarkup(row_width=1).add(
-    InlineKeyboardButton("✏️ Изменить профиль", callback_data="profile_edit"),
-    InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
-)
+    keyboard = InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("✏️ Изменить профиль", callback_data="profile_edit"),
+        InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
+    )
 
-await message.answer(text, reply_markup=keyboard)
+    await message.answer(text, reply_markup=keyboard)
 
