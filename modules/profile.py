@@ -1,14 +1,33 @@
 from aiogram import types
 from aiogram.dispatcher import Dispatcher
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 def setup(dp: Dispatcher):
-    @dp.message_handler(lambda message: message.text == "🧘 Профиль")
-    async def profile_menu(message: types.Message):
+
+    @dp.callback_query_handler(lambda c: c.data == "menu_profile")
+    async def profile_menu(callback: types.CallbackQuery):
         text = (
-            "Здесь ты создаёшь свой личный профиль, который помогает мне лучше понимать твои потребности.\n"
-            "Заполни или отредактируй данные, чтобы мы могли глубже заглянуть в твой мир."
+            "🧘 Профиль пользователя\n\n"
+            "Здесь ты можешь указать или изменить данные для персональных гороскопов:\n"
+            "• Имя\n"
+            "• Дата и время рождения\n"
+            "• Город рождения\n\n"
+            "Эти данные помогают мне точнее составить карту твоей души."
         )
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        buttons = ["✏️ Изменить данные", "🔙 Назад"]
-        keyboard.add(*buttons)
-        await message.answer(text, reply_markup=keyboard)
+        await callback.message.edit_text(text, reply_markup=profile_menu_keyboard())
+        await callback.answer()
+
+    @dp.callback_query_handler(lambda c: c.data == "profile_edit")
+    async def profile_edit_placeholder(callback: types.CallbackQuery):
+        text = (
+            "✏️ В будущем здесь будет форма редактирования профиля.\n\n"
+            "Пока ты можешь отправить мне свои данные вручную."
+        )
+        await callback.message.edit_text(text, reply_markup=profile_menu_keyboard())
+        await callback.answer()
+
+def profile_menu_keyboard():
+    return InlineKeyboardMarkup(row_width=1).add(
+        InlineKeyboardButton("✏️ Изменить профиль", callback_data="profile_edit"),
+        InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
+    )
