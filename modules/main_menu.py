@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from utils.time_status import online_status_text
+from utils.time_status import is_mila_online, online_status_text
 
 
 def setup(dp: Dispatcher):
