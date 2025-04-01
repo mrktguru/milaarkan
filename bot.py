@@ -3,6 +3,14 @@ import os
 from aiogram import Bot, Dispatcher, executor
 from dotenv import load_dotenv
 
+from utils.db import init_db
+
+if __name__ == '__main__':
+    import asyncio
+    asyncio.get_event_loop().run_until_complete(init_db())  # инициализируем БД
+    executor.start_polling(dp, skip_updates=True)
+
+
 # Загружаем переменные окружения
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
