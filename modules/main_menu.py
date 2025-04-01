@@ -17,9 +17,9 @@ def setup(dp: Dispatcher):
         )
         await message.answer(text, reply_markup=main_menu_keyboard())
 
-@dp.callback_query_handler(lambda c: c.data == "noop_status")
-async def ignore_status_click(callback: types.CallbackQuery):
-    await callback.answer("Этот статус не нажимается 😊", show_alert=False)
+    @dp.callback_query_handler(lambda c: c.data == "noop_status")
+    async def ignore_status_click(callback: types.CallbackQuery):
+        await callback.answer("Этот статус не нажимается 😊", show_alert=False)
 
 
 
