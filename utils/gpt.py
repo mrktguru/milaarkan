@@ -1,9 +1,9 @@
 import os
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def generate_horoscope_for_sign(sign: str, period: str = "сегодня") -> str:
     prompt = (
@@ -14,7 +14,7 @@ async def generate_horoscope_for_sign(sign: str, period: str = "сегодня")
         "Не используй общие фразы, сделай текст живым, как будто ты говоришь лично ей."
     )
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.8,
