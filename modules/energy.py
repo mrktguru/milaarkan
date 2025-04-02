@@ -1,6 +1,8 @@
 from aiogram import types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from modules.main_menu import show_main_menu
+
 
 def setup(dp: Dispatcher):
 
@@ -46,3 +48,7 @@ def buy_keyboard():
         InlineKeyboardButton("💎 1000 энергии — 699 ₽", callback_data="pay_1000"),
         InlineKeyboardButton("🔙 Назад", callback_data="menu_energy")
     )
+
+    @dp.callback_query_handler(lambda c: c.data == "main_menu")
+    async def back_to_main(callback: types.CallbackQuery):
+        await show_main_menu(callback)
