@@ -55,3 +55,26 @@ def main_menu_keyboard():
     status = online_status_text()
     keyboard.add(InlineKeyboardButton(status, callback_data="noop_status"))
     return keyboard
+    
+async def show_main_menu(callback_or_message):
+    from keyboards.main import main_menu_keyboard
+    text = (
+        "Здравствуй.\n"
+        "Меня зовут Мила Аркан, я астролог и практикующий психолог.\n\n"
+        "Если ты здесь — это не случайность. Иногда судьба проявляется через детали: нужный человек, вовремя прочитанное сообщение… или вот такой бот.\n\n"
+        "Я помогу тебе понять, что происходит внутри и снаружи — через язык звёзд и символов.\n\n"
+        "🌿 Готова начать?"
+    )
+    if isinstance(callback_or_message, types.CallbackQuery):
+        await callback_or_message.message.edit_text(text, reply_markup=main_menu_keyboard())
+        await callback_or_message.answer()
+    else:
+        await callback_or_message.answer(text, reply_markup=main_menu_keyboard())
+
+def setup(dp: Dispatcher):
+    # ... (другие хендлеры)
+    
+    @dp.callback_query_handler(lambda c: c.data == "main_menu")
+    async def handle_main_menu(callback: types.CallbackQuery):
+        await show_main_menu(callback)
+
