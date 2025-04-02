@@ -1,5 +1,7 @@
 import os
 import random
+from datetime import datetime
+import pytz
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -8,7 +10,6 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 MAX_LENGTH = 3500  # безопасная длина одного сообщения Telegram
 
-# Возможные творческие акценты для вариативности
 CREATIVE_STYLES = [
     "Пусть тон будет как письмо старшей подруге.",
     "Используй метафору воды, ветра или света.",
@@ -17,39 +18,46 @@ CREATIVE_STYLES = [
     "Представь, что ты пишешь человеку, который не верит в гороскопы — но ищет знак.",
 ]
 
+def get_current_period_text() -> tuple[str, str]:
+    tz = pytz.timezone("Europe/Moscow")
+    now = datetime.now(tz)
+    if now.hour >= 20:
+        return "завтра", "Сделай его немного короче — лаконично, но с глубиной (до 500 символов)"
+    return "сегодня", "Сделай гороскоп лаконичным — не длиннее 700 символов, но ёмко и осмысленно"
+
 async def generate_horoscope_for_sign(
     sign: str,
-    period: str = "сегодня",
+    period: str = "auto",
     personal: bool = False,
     name: str = None
 ) -> list[str]:
-    # Выбираем модель в зависимости от контекста
-    model = "gpt-4-turbo" if personal else "gpt-3.5-turbo"
+    # Определяем период
+    if period == "auto":
+        day_text, length_hint = get_current_period_text()
+    else:
+        day_text = period
+        length_hint = ""
 
-    # Добавляем творческую вариативность
+    model = "gpt-4-turbo" if personal else "gpt-3.5-turbo"
     creative_hint = random.choice(CREATIVE_STYLES)
 
-    # Формируем обращение
     if personal and name:
         salutation = f"для человека по имени {name}"
     else:
         salutation = f"для знака {sign}"
 
-    # Формируем промт
     prompt = (
         f"Ты — Мила Аркан, астролог и практикующий психолог с 10-летним опытом.\n"
-        f"Напиши гороскоп {salutation} на {period}.\n\n"
-        "Пиши от первого лица, как будто ты лично обращаешься к читателю. "
-        "Стиль — тёплый, психологичный, уважительный. Избегай шаблонов и общих фраз. "
-        "Говори глубоко, интуитивно, но ясно. "
+        f"Напиши гороскоп {salutation} на {day_text}.\n\n"
+        f"{length_hint}\n"
+        "Пиши от первого лица, избегай шаблонов. Стиль — тёплый, уважительный, психологичный.\n"
         f"{creative_hint}"
     )
 
-    # Отправляем запрос
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.95,  # больше разнообразия
+        temperature=0.95,
         max_tokens=1000
     )
 
