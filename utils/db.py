@@ -95,25 +95,27 @@ async def save_user_action(user_id: int, action: str, date: str = None, check_on
             await db.commit()
         return False
 
-        async def init_db():
-            async with aiosqlite.connect(DB_NAME) as db:
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS users (
-                        telegram_id INTEGER PRIMARY KEY,
-                        name TEXT,
-                        birth_date TEXT,
-                        birth_time TEXT,
-                        birth_city TEXT,
-                        energy INTEGER DEFAULT 0
-                    )
-                """)
-                await db.execute("""
-                    CREATE TABLE IF NOT EXISTS user_actions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER,
-                        action TEXT,
-                        date TEXT
-                    )
-                """)
-                await db.commit()
 
+# ========== INIT DB ==========
+
+async def init_db():
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                telegram_id INTEGER PRIMARY KEY,
+                name TEXT,
+                birth_date TEXT,
+                birth_time TEXT,
+                birth_city TEXT,
+                energy INTEGER DEFAULT 0
+            )
+        """)
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS user_actions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                action TEXT,
+                date TEXT
+            )
+        """)
+        await db.commit()
