@@ -84,7 +84,7 @@ def setup(dp: Dispatcher):
         sign = callback.data.split("_")[-1].capitalize()
         await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
 
-        horoscope_parts = await generate_horoscope_for_sign(sign, personal=False)
+        horoscope_parts = await generate_horoscope_for_sign(sign)
 
         keyboard = InlineKeyboardMarkup().add(
             InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
