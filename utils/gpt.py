@@ -1,6 +1,6 @@
 import os
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import re
 from openai import OpenAI
@@ -19,70 +19,77 @@ CREATIVE_STYLES = [
     "Представь, что ты пишешь человеку, который не верит в гороскопы — но ищет знак.",
 ]
 
-TENSION_STYLES = [
-    "Сделай акцент на том, что день может быть эмоционально сложным.",
-    "Добавь тонкое предупреждение — как будто что-то внутри подсказывает быть осторожнее.",
-    "Позволь себе чуть больше тревоги в словах, но не теряя уважительного тона.",
-    "Пусть гороскоп звучит как внутреннее предчувствие — что не всё будет легко.",
-    "Намекни, что энергия дня требует внимательности и осторожности.",
-]
-
-
-def get_current_period_text() -> tuple[str, str]:
+def format_week_dates():
     tz = pytz.timezone("Europe/Moscow")
-    now = datetime.now(tz)
-    if now.hour >= 20:
-        return "завтра", "Сделай его немного короче — лаконично, но с глубиной (до 500 символов)"
-    return "сегодня", "Сделай гороскоп лаконичным — не длиннее 700 символов, но ёмко и осмысленно"
+    base_date = datetime.now(tz) + timedelta(days=1)
+    formatted = []
+    for i in range(7):
+        d = base_date + timedelta(days=i)
+        day = d.strftime("%d")
+        month = d.strftime("%B").lower()
+        weekday = d.strftime("%A")
+        date_string = f"{day} {get_russian_month(month)}, {get_russian_weekday(weekday)}"
+        formatted.append(date_string)
+    return formatted
 
+def get_russian_month(month):
+    mapping = {
+        "january": "января", "february": "февраля", "march": "марта",
+        "april": "апреля", "may": "мая", "june": "июня",
+        "july": "июля", "august": "августа", "september": "сентября",
+        "october": "октября", "november": "ноября", "december": "декабря"
+    }
+    return mapping.get(month.lower(), month)
 
-async def generate_horoscope_for_sign(
-    sign: str,
-    period: str = "auto",
-    personal: bool = False,
-    name: str = None
-) -> list[str]:
-    if period == "auto":
-        day_text, length_hint = get_current_period_text()
-    else:
-        day_text = period
-        length_hint = ""
+def get_russian_weekday(day):
+    mapping = {
+        "monday": "Понедельник", "tuesday": "Вторник", "wednesday": "Среда",
+        "thursday": "Четверг", "friday": "Пятница",
+        "saturday": "Суббота", "sunday": "Воскресенье"
+    }
+    return mapping.get(day.lower(), day)
 
+async def generate_weekly_horoscope(sign: str, personal: bool = False, name: str = None) -> list[str]:
     model = "gpt-4-turbo" if personal else "gpt-3.5-turbo"
     creative_hint = random.choice(CREATIVE_STYLES)
-    tension_hint = random.choice(TENSION_STYLES) if random.random() < 0.2 else ""
 
     salutation = f"для человека по имени {name}" if personal and name else f"для знака {sign}"
 
-    prompt = (
-        "Ты — Мила Аркан.\n"
-        "Ты астролог и практикующий психолог с 10-летним опытом, и твоя особенность — сочетать глубину астрологических знаний с психологической ясностью.\n"
-        "Ты не даёшь шаблонные советы, не увлекаешься мистикой, не утешаешь — ты помогаешь человеку увидеть суть.\n"
-        "Ты не подписываешься в конце, не используешь обращения вроде 'с любовью', 'я рядом', 'твоя Мила'.\n"
-        "Ты говоришь кратко, но ёмко, без лишнего.\n\n"
-        f"Напиши гороскоп {salutation} на {day_text}.\n"
-        f"{length_hint}\n"
-        f"{creative_hint}\n"
-        f"{tension_hint}"
+    # Добавим инструкцию про тревожные дни
+    tension_instruction = (
+        "Сделай 1 или 2 дня недели немного напряжёнными или тревожными. "
+        "Пусть это будет не страшно, а как будто смена фона, эмоциональная глубина. "
+        "Пусть человек почувствует — именно в эти дни стоит быть особенно внимательной к себе."
     )
 
+    date_headers = format_week_dates()
+    date_block = "\n".join([f"{date} — ..." for date in date_headers])
+
+    prompt = (
+        "Ты — Мила Аркан.\n"
+        "Ты астролог и практикующий психолог с 10-летним опытом. "
+        "Ты говоришь без мистики, но чувствуешь энергии. "
+        "Ты не даёшь шаблонов, не утешаешь — ты наблюдаешь и направляешь.\n\n"
+        f"Напиши гороскоп {salutation} на 7 дней начиная с завтрашнего дня.\n"
+        "Для каждого дня укажи дату в формате: 04 апреля, Суббота.\n"
+        "Не сокращай — каждый день должен быть такой же по длине, как обычный гороскоп на день.\n\n"
+        f"{tension_instruction}\n"
+        f"{creative_hint}"
+    )
 
     response = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.95,
-        max_tokens=1000
+        temperature=0.9,
+        max_tokens=2500
     )
 
     content = response.choices[0].message.content.strip()
     return split_text_safe(content)
 
-
 def split_text_safe(text: str) -> list[str]:
-    # Попробуем разбить по существующим абзацам
     paragraphs = re.split(r"\n{2,}|\n(?=\w)", text)
     if len(paragraphs) == 1:
-        # Принудительно разобьём по предложениям
         sentences = re.split(r'(?<=[.!?]) +', text)
         paragraphs = []
         chunk = ""
@@ -93,11 +100,7 @@ def split_text_safe(text: str) -> list[str]:
                 chunk = ""
         if chunk:
             paragraphs.append(chunk.strip())
-
-    # Склеиваем с разрежённостью
     spaced_text = "\n\n".join(paragraphs).strip()
-
-    # Разбиваем по длине Telegram
     chunks = []
     while spaced_text:
         if len(spaced_text) <= MAX_LENGTH:
