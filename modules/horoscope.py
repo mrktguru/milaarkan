@@ -40,7 +40,7 @@ def setup(dp: Dispatcher):
                 )
 
                 await callback.message.edit_text(
-                    f"🌿 Гороскоп на сегодня для {sign}:\n\n{horoscope_parts[0]}",
+                    f"🌿 {sign}: гороскоп на сегодня\n\n{horoscope_parts[0]}",
                     reply_markup=horoscope_menu_keyboard()
                 )
 
@@ -91,7 +91,7 @@ def setup(dp: Dispatcher):
         )
 
         await callback.message.edit_text(
-            f"🌿 Гороскоп на сегодня для {sign}:\n\n{horoscope_parts[0]}", reply_markup=keyboard
+            f"🌿 {sign}: гороскоп на сегодня\n\n{horoscope_parts[0]}", reply_markup=keyboard
         )
 
         for part in horoscope_parts[1:]:
