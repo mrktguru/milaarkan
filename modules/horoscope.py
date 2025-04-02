@@ -34,12 +34,15 @@ def setup(dp: Dispatcher):
                 await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
 
                 horoscope_parts = await generate_horoscope_for_sign(sign)
-                await callback.message.edit_text(f"🌿 Гороскоп для {sign}:\n\n{horoscope_parts[0]}", reply_markup=keyboard)
-                
+
+                await callback.message.edit_text(
+                    f"🌿 Гороскоп на сегодня для {sign}:\n\n{horoscope_parts[0]}",
+                    reply_markup=horoscope_menu_keyboard()
+                )
+
                 for part in horoscope_parts[1:]:
                     await callback.message.answer(part)
 
-                )
             except:
                 await callback.message.edit_text(
                     "Не удалось определить знак зодиака. Проверь дату рождения в профиле.",
@@ -77,16 +80,19 @@ def setup(dp: Dispatcher):
         sign = callback.data.split("_")[-1].capitalize()
         await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
 
-        horoscope = await generate_horoscope_for_sign(sign)
+        horoscope_parts = await generate_horoscope_for_sign(sign)
 
         keyboard = InlineKeyboardMarkup().add(
             InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
         )
 
         await callback.message.edit_text(
-            f"🌿 Гороскоп на сегодня для {sign}:\n\n{horoscope}",
-            reply_markup=keyboard
+            f"🌿 Гороскоп на сегодня для {sign}:\n\n{horoscope_parts[0]}", reply_markup=keyboard
         )
+
+        for part in horoscope_parts[1:]:
+            await callback.message.answer(part)
+
         await callback.answer()
 
     @dp.callback_query_handler(lambda c: c.data == "horoscope_week")
