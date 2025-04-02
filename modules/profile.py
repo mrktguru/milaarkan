@@ -4,9 +4,10 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import re
+from geopy.geocoders import Nominatim
 
 from utils.db import save_user_profile, get_user
-from geopy.geocoders import Nominatim
+from modules.main_menu import show_main_menu
 
 geolocator = Nominatim(user_agent="milaarkan_bot")
 
@@ -120,3 +121,8 @@ def setup(dp: Dispatcher):
             InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
         )
         await message.answer(text, reply_markup=keyboard)
+
+    @dp.callback_query_handler(lambda c: c.data == "main_menu", state="*")
+    async def back_to_main(callback: types.CallbackQuery, state: FSMContext):
+        await state.finish()
+        await show_main_menu(callback)
