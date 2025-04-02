@@ -1,40 +1,52 @@
 import aiosqlite
-
-DB_NAME = "data.db"
-
-async def init_db():
-    async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                telegram_id INTEGER UNIQUE,
-                name TEXT,
-                birth_date TEXT,
-                birth_time TEXT,
-                birth_city TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """)
-        await db.commit()
-
-async def get_user(telegram_id: int):
-    async with aiosqlite.connect(DB_NAME) as db:
-        async with db.execute("SELECT * FROM users WHERE telegram_id = ?", (telegram_id,)) as cursor:
-            return await cursor.fetchone()
-
-async def save_user(telegram_id, name, birth_date, birth_time, birth_city):
-    async with aiosqlite.connect(DB_NAME) as db:
-        await db.execute("""
-            INSERT OR REPLACE INTO users (telegram_id, name, birth_date, birth_time, birth_city)
-            VALUES (?, ?, ?, ?, ?)
-        """, (telegram_id, name, birth_date, birth_time, birth_city))
-        await db.commit()
-
-import aiosqlite
 from datetime import datetime
 
 DB_NAME = "milaarkan.db"
 
+
+# ========== USERS ==========
+
+async def get_user(telegram_id: int):
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                telegram_id INTEGER PRIMARY KEY,
+                name TEXT,
+                birth_date TEXT,
+                birth_time TEXT,
+                birth_city TEXT,
+                energy INTEGER DEFAULT 0
+            )
+        """)
+        async with db.execute("SELECT * FROM users WHERE telegram_id = ?", (telegram_id,)) as cursor:
+            return await cursor.fetchone()
+
+
+async def save_user_profile(telegram_id, name, birth_date, birth_time, birth_city):
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                telegram_id INTEGER PRIMARY KEY,
+                name TEXT,
+                birth_date TEXT,
+                birth_time TEXT,
+                birth_city TEXT,
+                energy INTEGER DEFAULT 0
+            )
+        """)
+        await db.execute("""
+            INSERT INTO users (telegram_id, name, birth_date, birth_time, birth_city)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(telegram_id) DO UPDATE SET
+                name=excluded.name,
+                birth_date=excluded.birth_date,
+                birth_time=excluded.birth_time,
+                birth_city=excluded.birth_city
+        """, (telegram_id, name, birth_date, birth_time, birth_city))
+        await db.commit()
+
+
+# ========== ENERGY ==========
 
 async def get_user_energy(user_id: int) -> int:
     async with aiosqlite.connect(DB_NAME) as db:
@@ -48,6 +60,8 @@ async def update_user_energy(user_id: int, delta: int):
         await db.execute("UPDATE users SET energy = energy + ? WHERE telegram_id = ?", (delta, user_id))
         await db.commit()
 
+
+# ========== ACTION TRACKING ==========
 
 async def save_user_action(user_id: int, action: str, date: str = None, check_only: bool = False) -> bool:
     if not date:
