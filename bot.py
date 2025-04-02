@@ -3,6 +3,9 @@ import os
 from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from dotenv import load_dotenv
+from modules import placeholders
+placeholders.setup(dp)
+
 
 # Загрузка переменных из .env
 load_dotenv()
