@@ -1,6 +1,8 @@
 from aiogram import types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from modules.main_menu import show_main_menu
+
 
 def setup(dp: Dispatcher):
 
@@ -19,3 +21,6 @@ def setup(dp: Dispatcher):
         )
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
+    @dp.callback_query_handler(lambda c: c.data == "main_menu")
+    async def back_to_main(callback: types.CallbackQuery):
+        await show_main_menu(callback)
