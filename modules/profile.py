@@ -5,13 +5,11 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from utils.db import save_user, get_user
 
-
 class ProfileForm(StatesGroup):
     name = State()
     birth_date = State()
     birth_time = State()
     birth_city = State()
-
 
 def setup(dp: Dispatcher):
 
@@ -30,10 +28,10 @@ def setup(dp: Dispatcher):
             text = "🧘 Профиль пока не заполнен. Хочешь внести данные?"
 
         keyboard = InlineKeyboardMarkup(row_width=1).add(
-            InlineKeyboardButton("✏️ Заполнить/Изменить", callback_data="profile_edit"),
+            InlineKeyboardButton("🌟 Персональный гороскоп", callback_data="horoscope_personal"),
+            InlineKeyboardButton("✏️ Изменить профиль", callback_data="profile_edit"),
             InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
         )
-
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
 
@@ -75,7 +73,6 @@ def setup(dp: Dispatcher):
         await state.finish()
         await message.answer("✨ Спасибо! Профиль сохранён.")
 
-        # Показываем заполненный профиль
         user = await get_user(message.from_user.id)
         text = (
             f"🧘 Твой профиль:\n\n"
@@ -84,12 +81,11 @@ def setup(dp: Dispatcher):
             f"Время рождения: {user[4]}\n"
             f"Город рождения: {user[5]}"
         )
-        
+
         keyboard = InlineKeyboardMarkup(row_width=1).add(
             InlineKeyboardButton("🌟 Персональный гороскоп", callback_data="horoscope_personal"),
             InlineKeyboardButton("✏️ Изменить профиль", callback_data="profile_edit"),
             InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
         )
-        
-        await message.answer(text, reply_markup=keyboard)
 
+        await message.answer(text, reply_markup=keyboard)
