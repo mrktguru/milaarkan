@@ -5,12 +5,14 @@ from dotenv import load_dotenv
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-
-
-
 MAX_LENGTH = 3500  # безопасная длина одного сообщения Telegram
 
-async def generate_horoscope_for_sign(sign: str, period: str = "сегодня", personal: bool = False, name: str = None) -> list[str]:
+async def generate_horoscope_for_sign(
+    sign: str,
+    period: str = "сегодня",
+    personal: bool = False,
+    name: str = None
+) -> list[str]:
     if personal and name:
         salutation = f"для человека по имени {name}"
     else:
@@ -19,9 +21,9 @@ async def generate_horoscope_for_sign(sign: str, period: str = "сегодня",
     prompt = (
         f"Ты — Мила Аркан, астролог и практикующий психолог с 10-летним опытом.\n"
         f"Напиши гороскоп {salutation} на {period}.\n\n"
-        "Пиши от первого лица, с тёплым, психологическим подходом. "
-        "Если имя неизвестно — избегай упоминания пола или обращения. "
-        "Не используй общие фразы, говори живо и по существу."
+        "Пиши от первого лица, как будто ты лично обращаешься к читателю. "
+        "Если имя неизвестно — избегай обращения по полу. "
+        "Стиль: тёплый, психологичный, уважительный, без клише."
     )
 
     response = client.chat.completions.create(
@@ -33,7 +35,6 @@ async def generate_horoscope_for_sign(sign: str, period: str = "сегодня",
 
     content = response.choices[0].message.content.strip()
     return split_text_safe(content)
-
 
 
 def split_text_safe(text: str) -> list[str]:
