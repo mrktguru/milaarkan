@@ -36,13 +36,26 @@ def setup(dp: Dispatcher):
             text = "🆓 Чтобы получить гороскоп, выбери свой знак зодиака:"
             keyboard = InlineKeyboardMarkup(row_width=2)
             signs = [
-                "Овен", "Телец", "Близнецы", "Рак",
-                "Лев", "Дева", "Весы", "Скорпион",
-                "Стрелец", "Козерог", "Водолей", "Рыбы"
+                ("♈ Овен", "21.03–19.04"),
+                ("♉ Телец", "20.04–20.05"),
+                ("♊ Близнецы", "21.05–20.06"),
+                ("♋ Рак", "21.06–22.07"),
+                ("♌ Лев", "23.07–22.08"),
+                ("♍ Дева", "23.08–22.09"),
+                ("♎ Весы", "23.09–22.10"),
+                ("♏ Скорпион", "23.10–21.11"),
+                ("♐ Стрелец", "22.11–21.12"),
+                ("♑ Козерог", "22.12–19.01"),
+                ("♒ Водолей", "20.01–18.02"),
+                ("♓ Рыбы", "19.02–20.03"),
             ]
-            for sign in signs:
-                keyboard.insert(InlineKeyboardButton(sign, callback_data=f"free_horoscope_{sign.lower()}"))
-            keyboard.add(InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope"))
+
+            for sign, dates in signs:
+                sign_clean = sign.split(" ")[1].lower()  # получаем "овен", "телец" и т.п.
+                keyboard.insert(
+                    InlineKeyboardButton(f"{sign} ({dates})", callback_data=f"free_horoscope_{sign_clean}")
+                )
+
             await callback.message.edit_text(text, reply_markup=keyboard)
             await callback.answer()
             return
