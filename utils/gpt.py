@@ -2,6 +2,7 @@ import os
 import random
 from datetime import datetime
 import pytz
+import re
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -41,7 +42,6 @@ async def generate_horoscope_for_sign(
     personal: bool = False,
     name: str = None
 ) -> list[str]:
-    # Определяем "сегодня/завтра"
     if period == "auto":
         day_text, length_hint = get_current_period_text()
     else:
@@ -50,23 +50,16 @@ async def generate_horoscope_for_sign(
 
     model = "gpt-4-turbo" if personal else "gpt-3.5-turbo"
     creative_hint = random.choice(CREATIVE_STYLES)
+    tension_hint = random.choice(TENSION_STYLES) if random.random() < 0.2 else ""
 
-    # 🔥 20% вероятности добавить "тревожный стиль"
-    tension_hint = ""
-    if random.random() < 0.2:
-        tension_hint = "\n" + random.choice(TENSION_STYLES)
-
-    if personal and name:
-        salutation = f"для человека по имени {name}"
-    else:
-        salutation = f"для знака {sign}"
+    salutation = f"для человека по имени {name}" if personal and name else f"для знака {sign}"
 
     prompt = (
         f"Ты — Мила Аркан, астролог и практикующий психолог с 10-летним опытом.\n"
         f"Напиши гороскоп {salutation} на {day_text}.\n\n"
         f"{length_hint}\n"
-        "Пиши от первого лица, избегай шаблонов. Стиль — тёплый, уважительный, психологичный.\n"
-        f"{creative_hint}"
+        "Пиши от первого лица, избегай шаблонов. Стиль — тёплый, психологичный, интуитивный и уважительный.\n"
+        f"{creative_hint}\n"
         f"{tension_hint}"
     )
 
@@ -82,14 +75,33 @@ async def generate_horoscope_for_sign(
 
 
 def split_text_safe(text: str) -> list[str]:
+    # Попробуем разбить по существующим абзацам
+    paragraphs = re.split(r"\n{2,}|\n(?=\w)", text)
+    if len(paragraphs) == 1:
+        # Принудительно разобьём по предложениям
+        sentences = re.split(r'(?<=[.!?]) +', text)
+        paragraphs = []
+        chunk = ""
+        for i, sentence in enumerate(sentences, 1):
+            chunk += sentence.strip() + " "
+            if i % 2 == 0:
+                paragraphs.append(chunk.strip())
+                chunk = ""
+        if chunk:
+            paragraphs.append(chunk.strip())
+
+    # Склеиваем с разрежённостью
+    spaced_text = "\n\n".join(paragraphs).strip()
+
+    # Разбиваем по длине Telegram
     chunks = []
-    while text:
-        if len(text) <= MAX_LENGTH:
-            chunks.append(text)
+    while spaced_text:
+        if len(spaced_text) <= MAX_LENGTH:
+            chunks.append(spaced_text)
             break
-        split_pos = text.rfind("\n", 0, MAX_LENGTH)
+        split_pos = spaced_text.rfind("\n\n", 0, MAX_LENGTH)
         if split_pos == -1:
             split_pos = MAX_LENGTH
-        chunks.append(text[:split_pos].strip())
-        text = text[split_pos:].strip()
+        chunks.append(spaced_text[:split_pos].strip())
+        spaced_text = spaced_text[split_pos:].strip()
     return chunks
