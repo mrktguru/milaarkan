@@ -9,6 +9,7 @@ from utils.zodiac import get_zodiac_sign
 from utils.gpt import generate_horoscope_for_sign, generate_weekly_horoscope
 from modules.main_menu import show_main_menu
 
+
 HOROSCOPE_PRICE = 50
 
 def setup(dp: Dispatcher):
@@ -19,26 +20,21 @@ def setup(dp: Dispatcher):
             "Каждый день — как новый разворот личной книги жизни.\n"
             "Выбери формат гороскопа:"
         )
-        keyboard = InlineKeyboardMarkup(row_width=1).add(
-            InlineKeyboardButton("🆓 На сегодня", callback_data="horoscope_today"),
-            InlineKeyboardButton("📆 На неделю", callback_data="horoscope_week"),
-            InlineKeyboardButton("💫 Персональный", callback_data="horoscope_personal"),
-            InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
-        )
+        keyboard = horoscope_menu_keyboard()
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
 
-    def is_today_used(user_id: int) -> bool:
+    async def is_today_used(user_id: int) -> bool:
         tz = pytz.timezone("Europe/Moscow")
         today = datetime.now(tz).strftime("%Y-%m-%d")
-        return save_user_action(user_id, action="daily_horoscope", date=today, check_only=True)
+        return await save_user_action(user_id, action="daily_horoscope", date=today, check_only=True)
 
     @dp.callback_query_handler(lambda c: c.data == "horoscope_today")
     async def horoscope_today(callback: types.CallbackQuery):
         user_id = callback.from_user.id
         user = await get_user(user_id)
 
-        if is_today_used(user_id):
+        if await is_today_used(user_id):
             keyboard = InlineKeyboardMarkup(row_width=1).add(
                 InlineKeyboardButton("🔮 Да, покажи на завтра", callback_data="horoscope_tomorrow"),
                 InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
@@ -65,7 +61,7 @@ def setup(dp: Dispatcher):
             return
 
         await update_user_energy(user_id, -HOROSCOPE_PRICE)
-        save_user_action(user_id, action="daily_horoscope")
+        await save_user_action(user_id, action="daily_horoscope")
 
         if user and user[3]:
             day, month, *_ = map(int, user[3].split("."))
@@ -173,6 +169,11 @@ def setup(dp: Dispatcher):
         )
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
+
+    @dp.callback_query_handler(lambda c: c.data == "main_menu")
+    async def back_to_main(callback: types.CallbackQuery):
+        await show_main_menu(callback)
+
 
 def horoscope_menu_keyboard():
     return InlineKeyboardMarkup(row_width=1).add(
