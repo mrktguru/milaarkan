@@ -33,7 +33,11 @@ def setup(dp: Dispatcher):
                 sign = get_zodiac_sign(day, month)
                 await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
 
-                horoscope_parts = await generate_horoscope_for_sign(sign)
+                horoscope_parts = await generate_horoscope_for_sign(
+                    sign,
+                    personal=True,
+                    name=user[2]
+                )
 
                 await callback.message.edit_text(
                     f"🌿 Гороскоп на сегодня для {sign}:\n\n{horoscope_parts[0]}",
@@ -80,7 +84,7 @@ def setup(dp: Dispatcher):
         sign = callback.data.split("_")[-1].capitalize()
         await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
 
-        horoscope_parts = await generate_horoscope_for_sign(sign)
+        horoscope_parts = await generate_horoscope_for_sign(sign, personal=False)
 
         keyboard = InlineKeyboardMarkup().add(
             InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
