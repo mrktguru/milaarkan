@@ -1,6 +1,7 @@
 from aiogram import types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from utils.gpt import generate_horoscope_for_sign
 
 from utils.db import get_user
 from utils.zodiac import get_zodiac_sign
@@ -66,9 +67,15 @@ def setup(dp: Dispatcher):
     @dp.callback_query_handler(lambda c: c.data.startswith("free_horoscope_"))
     async def horoscope_by_sign(callback: types.CallbackQuery):
         sign = callback.data.split("_")[-1].capitalize()
-        text = f"🆓 Гороскоп на сегодня для {sign}:\n\n✨ День подойдёт для мягкой настройки и наблюдения за собой."
-        await callback.message.edit_text(text, reply_markup=horoscope_menu_keyboard())
-        await callback.answer()
+        await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
+        horoscope = await generate_horoscope_for_sign(sign)
+        keyboard = InlineKeyboardMarkup().add(
+            InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+        )
+
+    await callback.message.edit_text(f"🌿 Гороскоп для {sign}:\n\n{horoscope}", reply_markup=keyboard)
+    await callback.answer()
+
 
     @dp.callback_query_handler(lambda c: c.data == "horoscope_week")
     async def horoscope_week(callback: types.CallbackQuery):
