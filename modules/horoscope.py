@@ -33,11 +33,12 @@ def setup(dp: Dispatcher):
                 sign = get_zodiac_sign(day, month)
                 await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
 
-                horoscope = await generate_horoscope_for_sign(sign)
+                horoscope_parts = await generate_horoscope_for_sign(sign)
+                await callback.message.edit_text(f"🌿 Гороскоп для {sign}:\n\n{horoscope_parts[0]}", reply_markup=keyboard)
+                
+                for part in horoscope_parts[1:]:
+                    await callback.message.answer(part)
 
-                await callback.message.edit_text(
-                    f"🌿 Гороскоп на сегодня для {sign}:\n\n{horoscope}",
-                    reply_markup=horoscope_menu_keyboard()
                 )
             except:
                 await callback.message.edit_text(
