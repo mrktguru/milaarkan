@@ -2,10 +2,14 @@ from aiogram import types
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from utils.db import get_user
+from utils.db import get_user, save_user_action, get_user_energy, update_user_energy
 from utils.zodiac import get_zodiac_sign
 from utils.gpt import generate_horoscope_for_sign
+from datetime import datetime
+import pytz
 
+
+HOROSCOPE_PRICE = 50  # Энергия за гороскоп на день
 
 def setup(dp: Dispatcher):
 
@@ -24,80 +28,99 @@ def setup(dp: Dispatcher):
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
 
+    def is_today_used(user_id: int) -> bool:
+        tz = pytz.timezone("Europe/Moscow")
+        today = datetime.now(tz).strftime("%Y-%m-%d")
+        return save_user_action(user_id, action="daily_horoscope", date=today, check_only=True)
+
     @dp.callback_query_handler(lambda c: c.data == "horoscope_today")
     async def horoscope_today(callback: types.CallbackQuery):
+        user_id = callback.from_user.id
+        user = await get_user(user_id)
+
+        if is_today_used(user_id):
+            keyboard = InlineKeyboardMarkup(row_width=1).add(
+                InlineKeyboardButton("🔮 Да, покажи на завтра", callback_data="horoscope_tomorrow"),
+                InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+            )
+            await callback.message.edit_text(
+                "Гороскоп на сегодня я уже создала для тебя 🌙\n\n"
+                "Я не повторяюсь — ведь энергия момента уже была прочувствована.\n"
+                "Но если хочешь — могу почувствовать завтрашний день заранее.\n\n"
+                "🌿 Как тебе такой вариант?",
+                reply_markup=keyboard
+            )
+            return
+
+        energy = await get_user_energy(user_id)
+        if energy < HOROSCOPE_PRICE:
+            await callback.message.edit_text(
+                f"⛔ У тебя недостаточно энергии.\n\nДля гороскопа нужно {HOROSCOPE_PRICE}, а у тебя — {energy}.\n"
+                "Пополни баланс в разделе «Энергия».",
+                reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton("💎 Пополнить энергию", callback_data="menu_energy"),
+                    InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+                )
+            )
+            return
+
+        await update_user_energy(user_id, -HOROSCOPE_PRICE)
+        save_user_action(user_id, action="daily_horoscope")  # запомним факт запроса
+
+        if user and user[3]:
+            day, month, *_ = map(int, user[3].split("."))
+            sign = get_zodiac_sign(day, month)
+            await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
+
+            horoscope_parts = await generate_horoscope_for_sign(
+                sign, personal=True, name=user[2]
+            )
+
+            await callback.message.edit_text(
+                f"🌿 {sign}: гороскоп на сегодня\n\n{horoscope_parts[0]}",
+                reply_markup=horoscope_menu_keyboard()
+            )
+
+            for part in horoscope_parts[1:]:
+                await callback.message.answer(part)
+        else:
+            await callback.message.edit_text(
+                "У тебя не заполнен профиль. Пожалуйста, укажи дату рождения — я подскажу твой знак зодиака.",
+                reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton("🧬 Заполнить профиль", callback_data="menu_profile"),
+                    InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+                )
+            )
+
+        await callback.answer()
+
+    @dp.callback_query_handler(lambda c: c.data == "horoscope_tomorrow")
+    async def horoscope_tomorrow(callback: types.CallbackQuery):
         user = await get_user(callback.from_user.id)
         if user and user[3]:
-            try:
-                day, month, *_ = map(int, user[3].split("."))
-                sign = get_zodiac_sign(day, month)
-                await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
+            day, month, *_ = map(int, user[3].split("."))
+            sign = get_zodiac_sign(day, month)
+            await callback.message.edit_text(f"✨ Мила настраивается на завтрашний день для {sign} ♡")
 
-                horoscope_parts = await generate_horoscope_for_sign(
-                    sign,
-                    personal=True,
-                    name=user[2]
-                )
+            horoscope_parts = await generate_horoscope_for_sign(
+                sign, period="завтра", personal=True, name=user[2]
+            )
 
-                await callback.message.edit_text(
-                    f"🌿 {sign}: гороскоп на сегодня\n\n{horoscope_parts[0]}",
-                    reply_markup=horoscope_menu_keyboard()
-                )
+            await callback.message.edit_text(
+                f"🌿 {sign}: гороскоп на завтра\n\n{horoscope_parts[0]}",
+                reply_markup=horoscope_menu_keyboard()
+            )
 
-                for part in horoscope_parts[1:]:
-                    await callback.message.answer(part)
-
-            except:
-                await callback.message.edit_text(
-                    "Не удалось определить знак зодиака. Проверь дату рождения в профиле.",
-                    reply_markup=horoscope_menu_keyboard()
-                )
+            for part in horoscope_parts[1:]:
+                await callback.message.answer(part)
         else:
-            text = "🆓 Чтобы получить гороскоп, выбери свой знак зодиака:"
-            keyboard = InlineKeyboardMarkup(row_width=2)
-            signs = [
-                ("♈ Овен", "21.03–19.04"),
-                ("♉ Телец", "20.04–20.05"),
-                ("♊ Близнецы", "21.05–20.06"),
-                ("♋ Рак", "21.06–22.07"),
-                ("♌ Лев", "23.07–22.08"),
-                ("♍ Дева", "23.08–22.09"),
-                ("♎ Весы", "23.09–22.10"),
-                ("♏ Скорпион", "23.10–21.11"),
-                ("♐ Стрелец", "22.11–21.12"),
-                ("♑ Козерог", "22.12–19.01"),
-                ("♒ Водолей", "20.01–18.02"),
-                ("♓ Рыбы", "19.02–20.03"),
-            ]
-            for sign, dates in signs:
-                sign_clean = sign.split(" ")[1].lower()
-                keyboard.insert(
-                    InlineKeyboardButton(f"{sign} ({dates})", callback_data=f"free_horoscope_{sign_clean}")
+            await callback.message.edit_text(
+                "Чтобы я могла рассчитать завтрашний гороскоп — нужно заполнить профиль 💫",
+                reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton("🧬 Заполнить профиль", callback_data="menu_profile"),
+                    InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
                 )
-            keyboard.add(InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope"))
-            await callback.message.edit_text(text, reply_markup=keyboard)
-
-        await callback.answer()
-
-    @dp.callback_query_handler(lambda c: c.data.startswith("free_horoscope_"))
-    async def horoscope_by_sign(callback: types.CallbackQuery):
-        sign = callback.data.split("_")[-1].capitalize()
-        await callback.message.edit_text(f"✨ Мила настраивается на твой знак... {sign} ♡\nПодожди немного…")
-
-        horoscope_parts = await generate_horoscope_for_sign(sign)
-
-        keyboard = InlineKeyboardMarkup().add(
-            InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
-        )
-
-        await callback.message.edit_text(
-            f"🌿 {sign}: гороскоп на сегодня\n\n{horoscope_parts[0]}", reply_markup=keyboard
-        )
-
-        for part in horoscope_parts[1:]:
-            await callback.message.answer(part)
-
-        await callback.answer()
+            )
 
     @dp.callback_query_handler(lambda c: c.data == "horoscope_week")
     async def horoscope_week(callback: types.CallbackQuery):
@@ -120,6 +143,7 @@ def setup(dp: Dispatcher):
         )
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
+
 
 def horoscope_menu_keyboard():
     return InlineKeyboardMarkup(row_width=1).add(
