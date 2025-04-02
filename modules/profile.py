@@ -13,6 +13,18 @@ class ProfileForm(StatesGroup):
 
 def setup(dp: Dispatcher):
 
+    @dp.message_handler(commands=["reset_profile"])
+    async def reset_profile(message: types.Message):
+    from utils.db import DB_NAME
+    import aiosqlite
+
+    async with aiosqlite.connect(DB_NAME) as db:
+        await db.execute("DELETE FROM users WHERE telegram_id = ?", (message.from_user.id,))
+        await db.commit()
+
+    await message.answer("🧘 Профиль удалён. Теперь ты как новый пользователь.")
+
+
     @dp.callback_query_handler(lambda c: c.data == "menu_profile")
     async def profile_menu(callback: types.CallbackQuery):
         user = await get_user(callback.from_user.id)
