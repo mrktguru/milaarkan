@@ -7,9 +7,9 @@ import pytz
 from utils.db import get_user, save_user_action, get_user_energy, update_user_energy
 from utils.zodiac import get_zodiac_sign
 from utils.gpt import generate_horoscope_for_sign, generate_weekly_horoscope
+from modules.main_menu import show_main_menu
 
-
-HOROSCOPE_PRICE = 50  # Энергия за гороскоп на день
+HOROSCOPE_PRICE = 50
 
 def setup(dp: Dispatcher):
 
@@ -41,7 +41,7 @@ def setup(dp: Dispatcher):
         if is_today_used(user_id):
             keyboard = InlineKeyboardMarkup(row_width=1).add(
                 InlineKeyboardButton("🔮 Да, покажи на завтра", callback_data="horoscope_tomorrow"),
-                InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+                InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
             )
             await callback.message.edit_text(
                 "Гороскоп на сегодня я уже создала для тебя 🌙\n\n"
@@ -59,13 +59,13 @@ def setup(dp: Dispatcher):
                 "Пополни баланс в разделе «Энергия».",
                 reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("💎 Пополнить энергию", callback_data="menu_energy"),
-                    InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+                    InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
                 )
             )
             return
 
         await update_user_energy(user_id, -HOROSCOPE_PRICE)
-        save_user_action(user_id, action="daily_horoscope")  # запомним факт запроса
+        save_user_action(user_id, action="daily_horoscope")
 
         if user and user[3]:
             day, month, *_ = map(int, user[3].split("."))
@@ -88,7 +88,7 @@ def setup(dp: Dispatcher):
                 "У тебя не заполнен профиль. Пожалуйста, укажи дату рождения — я подскажу твой знак зодиака.",
                 reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("🧬 Заполнить профиль", callback_data="menu_profile"),
-                    InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+                    InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
                 )
             )
 
@@ -118,7 +118,7 @@ def setup(dp: Dispatcher):
                 "Чтобы я могла рассчитать завтрашний гороскоп — нужно заполнить профиль 💫",
                 reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("🧬 Заполнить профиль", callback_data="menu_profile"),
-                    InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+                    InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
                 )
             )
 
@@ -156,7 +156,7 @@ def setup(dp: Dispatcher):
                 "У тебя не заполнен профиль. Пожалуйста, укажи дату рождения, чтобы я могла определить твой знак 🌿",
                 reply_markup=InlineKeyboardMarkup().add(
                     InlineKeyboardButton("🧬 Заполнить профиль", callback_data="menu_profile"),
-                    InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+                    InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
                 )
             )
 
@@ -169,7 +169,7 @@ def setup(dp: Dispatcher):
             "Такой гороскоп помогает не только понять, но и почувствовать — что сейчас важно именно для тебя."
         )
         keyboard = InlineKeyboardMarkup().add(
-            InlineKeyboardButton("🔙 Назад", callback_data="menu_horoscope")
+            InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
         )
         await callback.message.edit_text(text, reply_markup=keyboard)
         await callback.answer()
