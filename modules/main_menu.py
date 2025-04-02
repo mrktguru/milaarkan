@@ -4,6 +4,21 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from utils.time_status import online_status_text, is_mila_online
 
 def setup(dp: Dispatcher):
+
+    # /start — первое касание
+    @dp.message_handler(commands=["start"])
+    async def start_command(message: types.Message):
+        text = (
+            "Здравствуй.\n"
+            "Меня зовут Мила Аркан, я астролог и практикующий психолог.\n\n"
+            "Если ты здесь — это не случайность. Иногда судьба проявляется через детали: "
+            "нужный человек, вовремя прочитанное сообщение… или вот такой бот.\n\n"
+            "Я помогу тебе понять, что происходит внутри и снаружи — через язык звёзд и символов.\n\n"
+            "🌿 Готова начать?"
+        )
+        await message.answer(text, reply_markup=main_menu_keyboard())
+
+    # Обработка inline-кнопки "Назад" в главное меню
     @dp.callback_query_handler(lambda c: c.data == "main_menu")
     async def show_main_menu(callback: types.CallbackQuery):
         text = (
@@ -17,6 +32,7 @@ def setup(dp: Dispatcher):
         await callback.message.edit_text(text, reply_markup=main_menu_keyboard())
         await callback.answer()
 
+    # Нажатие на статус Милы
     @dp.callback_query_handler(lambda c: c.data == "noop_status")
     async def ignore_status_click(callback: types.CallbackQuery):
         if is_mila_online():
@@ -25,6 +41,7 @@ def setup(dp: Dispatcher):
             text = "Сейчас Мила не в сети. Но как только появится — обязательно ответит тебе."
         await callback.answer(text, show_alert=False)
 
+# Клавиатура главного меню
 def main_menu_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=1)
     keyboard.add(
